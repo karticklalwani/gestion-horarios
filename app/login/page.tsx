@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,7 +17,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -22,36 +27,26 @@ export default function LoginPage() {
       password,
     });
 
-    setLoading(false);
-
     if (error) {
       setError(error.message);
+      setLoading(false);
       return;
     }
 
-    // Login correcto → dashboard (home)
+    // ✅ Login correcto → home
     router.push("/");
+    router.refresh();
   };
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
+    <main className="min-h-screen flex items-center justify-center bg-slate-900">
       <form
         onSubmit={handleLogin}
-        style={{
-          width: 320,
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-        }}
+        className="bg-slate-800 p-8 rounded-xl w-full max-w-sm space-y-4"
       >
-        <h1 style={{ textAlign: "center" }}>Iniciar sesión</h1>
+        <h1 className="text-2xl font-bold text-white text-center">
+          Gestión Horaria
+        </h1>
 
         <input
           type="email"
@@ -59,6 +54,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          className="w-full px-4 py-3 rounded-lg bg-slate-700 text-white outline-none"
         />
 
         <input
@@ -67,15 +63,20 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          className="w-full px-4 py-3 rounded-lg bg-slate-700 text-white outline-none"
         />
 
-        <button type="submit" disabled={loading}>
+        {error && (
+          <p className="text-red-400 text-sm text-center">{error}</p>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold"
+        >
           {loading ? "Entrando..." : "Entrar"}
         </button>
-
-        {error && (
-          <p style={{ color: "red", textAlign: "center" }}>{error}</p>
-        )}
       </form>
     </main>
   );
