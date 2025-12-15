@@ -19,7 +19,7 @@ export default function HomePage() {
     if (role === "superadmin") {
       router.push("/dashboard");
     } else if (role === "admin") {
-      router.push("/tienda");
+      router.push("/tiendas");
     } else if (role === "empleado") {
       router.push("/mis-horarios");
     }
