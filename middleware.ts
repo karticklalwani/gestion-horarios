@@ -1,20 +1,45 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name) {
+          return req.cookies.get(name)?.value;
+        },
+        set(name, value, options) {
+          res.cookies.set({ name, value, ...options });
+        },
+        remove(name, options) {
+          res.cookies.set({ name, value: "", ...options });
+        },
+      },
+    }
+  );
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const isLoginPage = req.nextUrl.pathname.startsWith("/login");
 
-  if (!session && !isLoginPage) {
+  // 🔐 No logueado → fuera
+  if (!user && !isLoginPage) {
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = "/login";
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // ✅ Logueado intentando ir a /login → dashboard
+  if (user && isLoginPage) {
+    const redirectUrl = req.nextUrl.clone();
+    redirectUrl.pathname = "/";
     return NextResponse.redirect(redirectUrl);
   }
 
