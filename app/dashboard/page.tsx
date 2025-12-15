@@ -1,59 +1,127 @@
 "use client";
 
-import { useUser } from "@/providers/UserProvider";
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import StatCard from "@/components/StatCard";
-import SectionCard from "@/components/SectionCard";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/providers/UserProvider";
 
 export default function DashboardPage() {
   const { user, role, loading } = useUser();
   const router = useRouter();
 
+  // 🔐 Protección de ruta
   useEffect(() => {
-    if (loading) return;
-
-    if (!user) {
+    if (!loading && !user) {
       router.push("/login");
-      return;
     }
+  }, [user, loading, router]);
 
-    if (role !== "superadmin") {
-      router.push("/");
-    }
-  }, [user, role, loading, router]);
-
-  if (loading) return <p>Cargando...</p>;
+  if (loading || !user) return null;
 
   return (
-    <main style={{ padding: 24 }}>
-      <h1 style={{ fontSize: 28, fontWeight: 600 }}>Dashboard</h1>
+    <main
+      style={{
+        padding: 24,
+        maxWidth: 900,
+        margin: "0 auto",
+      }}
+    >
+      {/* HEADER */}
+      <header style={{ marginBottom: 32 }}>
+        <h1 style={{ fontSize: 32, fontWeight: 700 }}>
+          Gestión Horaria
+        </h1>
+        <p style={{ color: "#666", marginTop: 6 }}>
+          Bienvenido {user.email}
+        </p>
+      </header>
 
-      {/* MÉTRICAS */}
-      <div style={{ display: "grid", gap: 16, marginTop: 24 }}>
-        <StatCard title="Tiendas" value="4" />
-        <StatCard title="Empleados" value="23" />
-        <StatCard title="Ausencias pendientes" value="3" />
-      </div>
+      {/* GRID */}
+      <section
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          gap: 20,
+        }}
+      >
+        {/* TIENDAS */}
+        {role === "superadmin" && (
+          <Card
+            title="Tiendas"
+            description="Crear y administrar tiendas"
+            onClick={() => router.push("/tiendas")}
+          />
+        )}
 
-      {/* SECCIONES */}
-      <div style={{ marginTop: 32, display: "grid", gap: 16 }}>
-        <SectionCard
-          title="Gestión de Tiendas"
-          description="Crear, editar y asignar tiendas"
-          onClick={() => router.push("/tiendas")}
+        {/* HORARIOS */}
+        <Card
+          title="Horarios"
+          description="Ver y gestionar horarios"
+          onClick={() => router.push("/horarios")}
         />
-        <SectionCard
-          title="Empleados"
-          description="Alta, baja y asignación de empleados"
-          onClick={() => router.push("/empleados")}
-        />
-        <SectionCard
+
+        {/* AUSENCIAS */}
+        <Card
           title="Ausencias"
-          description="Revisión y aprobación de ausencias"
+          description="Notificaciones y bajas"
           onClick={() => router.push("/ausencias")}
         />
-      </div>
+
+        {/* EMPLEADOS */}
+        {role === "superadmin" && (
+          <Card
+            title="Empleados"
+            description="Invitaciones y códigos"
+            onClick={() => router.push("/empleados")}
+          />
+        )}
+
+        {/* AJUSTES */}
+        {role === "superadmin" && (
+          <Card
+            title="Ajustes"
+            description="Configuración general"
+            onClick={() => router.push("/ajustes")}
+          />
+        )}
+      </section>
     </main>
+  );
+}
+
+/* ======================================================
+   🔹 COMPONENTE CARD (iOS style)
+====================================================== */
+function Card({
+  title,
+  description,
+  onClick,
+}: {
+  title: string;
+  description: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: "#fff",
+        borderRadius: 20,
+        padding: 20,
+        textAlign: "left",
+        border: "none",
+        boxShadow: "0 10px 30px rgba(0,0,0,.08)",
+        cursor: "pointer",
+        transition: "transform .15s ease",
+      }}
+      onMouseDown={(e) => (e.currentTarget.style.transform = "scale(.98)")}
+      onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+    >
+      <h3 style={{ fontSize: 18, fontWeight: 600 }}>
+        {title}
+      </h3>
+      <p style={{ marginTop: 6, color: "#666", fontSize: 14 }}>
+        {description}
+      </p>
+    </button>
   );
 }
